@@ -1,10 +1,25 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 
-const Form_c = ()=>{
+const Form_c = (props)=>{
 
     const [text, setText] = useState("")
     const [list, setList] = useState([])
+    
     const [list_null, setList_null] = useState("No hay notas, añade algunas!")
+
+    let up_obj = []
+
+    useEffect(()=>{
+        setList(props.list.map((item)=>{
+            if(item?.label != undefined && item?.label != ""){
+                return item?.label
+            }
+        }))
+        if(list != []){
+            setList_null("")
+        }
+    },[props.list])
+
 
     let [delete_color, setDelete_color] = useState("btn btn-danger opacity-75")
 
@@ -29,42 +44,94 @@ const Form_c = ()=>{
 
 
     const screen_list = list.map((item, index)=>
-    <div className="d-flex d-flex justify-content-between my-1 hidden_button">
-        <p className="my-1">{item}</p>
+    <div key={item+index+item} className="d-flex d-flex justify-content-between my-1 hidden_button">
+        <p className="my-1 text-light">{item}</p>
         <button onClick={()=>button_delete(index)} className={delete_color}>X</button>
     </div>
     )
 
     let button_submit = () =>{
         if(text != ""){
-            setList(current => [...current, text]);
+            setList(current => [...current, text])
             setText("")
             setList_null("")
         }
     }
     let button_enter_submit = (event)=>{
         if(event.key == "Enter"){
-            console.log("Has presionado Enter")
             button_submit()
         }
-        
+    }
+
+    const update_notes_api = async(get_obj) =>{
+		try{
+			const response = await fetch(props.api+props.logedUser, {
+				method: "PUT",
+				body: JSON.stringify(get_obj),
+				headers: {
+					'Content-Type': "application/json"
+				}
+			})
+        }catch(error){
+            alert("unexpected error!", error)
+        }
+    }
+
+    const update_notes = ()=>{
+        list.map((item)=>{
+            let obj = new Object()
+            let label = item
+            obj.label = label
+            obj.done = false
+            return up_obj.push(obj)
+        })
+        update_notes_api(up_obj)
+    }
+
+    const delete_user = async() =>{
+		try{
+			const response = await fetch(props.api+props.logedUser, {
+				method: "DELETE",
+				// body: JSON.stringify(get_obj),
+				headers: {
+					'Content-Type': "application/json"
+				}
+			})
+            window.location.reload()
+        }catch(error){
+            alert("unexpected error!", error)
+        }
     }
 
     return (
         <div className="d-flex flex-column justify-content-between" style={{width:"100%", minHeight:"85vh"}}>
-            <div className="d-flex flex-column container">
+            <div className="d-flex flex-column container" style={{minWidth: "1115px"}}>
                 <div className="mb-3 d-flex flex-column">
-                    <label className="form-label text-center mb-3" style={{fontSize: "30px"}}>Ingresa una nota</label>
+                    <label className="form-label text-center mb-3 text-info" style={{fontSize: "30px"}}>Enter a note</label>
                     <div className="d-flex">
                         <input onKeyDown={button_enter_submit} onChange={(e)=>setText(e.target.value)} type="text" className="form-control border-info" id="Input1" value={text} maxLength="100"/>
-                        <button onClick={button_submit} className="btn btn-success">Ingresar</button>
+                        <button onClick={button_submit} className="btn btn-success">Enter</button>
                     </div>
                 </div>
-                <h4 className="text-center" style={{fontSize: "20px"}}>Tus Notas</h4>
+                <div className="d-flex justify-content-between container">
+                    <h4 className="text-center text-primary ms-4" style={{fontSize: "20px"}}>
+                        Your notes
+                    </h4>
+                    <div className="d-flex me-2">
+                        <button onClick={update_notes} className="btn btn-success mx-2 border-info">
+                            Save notes
+                        </button>
+                        <button onClick={delete_user} className="btn btn-danger mx-2 border-secondary">
+                            Delete user
+                        </button>
+                    </div>
+                </div>
                 {screen_list}
-                {list_null}
+                <p className="text-light">
+                    {list_null}
+                </p>
             </div>
-            <footer className="d-flex bg-dark p-2 justify-content-center" style={{minWidth: "1115px"}}>
+            {/* <footer className="d-flex bg-dark p-2 justify-content-center" style={{minWidth: "1115px"}}>
 
                 <button type="button" className="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">
                     Eliminar todas las notas
@@ -87,7 +154,7 @@ const Form_c = ()=>{
                          </div>
                     </div>
                   </div>
-            </footer>
+            </footer> */}
         </div>
     )
 }
